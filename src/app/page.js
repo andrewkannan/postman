@@ -39,7 +39,11 @@ export default function Dashboard() {
     const res = await fetch('/api/settings');
     if (res.ok) {
       const data = await res.json();
-      if (data) setSettings(data);
+      if (data) {
+        setSettings({ host: data.host, port: data.port, user: data.user, pass: data.pass, interval: data.interval });
+        if (data.subject) setSubject(data.subject);
+        if (data.htmlTemplate) setHtmlTemplate(data.htmlTemplate);
+      }
     }
   };
 
@@ -62,7 +66,7 @@ export default function Dashboard() {
     await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings),
+      body: JSON.stringify({ ...settings, subject, htmlTemplate }),
     });
     setSavingSettings(false);
     alert('Settings saved!');
@@ -229,6 +233,10 @@ export default function Dashboard() {
                 <h2>Live Preview</h2>
                 <p style={{color: 'var(--text-muted)', marginBottom: '1rem'}}>Preview your HTML email.</p>
                 <div className={styles.previewPane} dangerouslySetInnerHTML={{ __html: htmlTemplate.replace(/{name}/gi, 'John Doe') }} />
+                
+                <button className="btn-primary" style={{marginTop: '1rem', width: '100%'}} onClick={handleSaveSettings} disabled={savingSettings}>
+                  {savingSettings ? 'Saving...' : 'Save Template'}
+                </button>
               </div>
             </div>
           </div>

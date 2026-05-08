@@ -12,8 +12,10 @@ model Setting {
   port      Int      @default(587)
   user      String   @default("")
   pass      String   @default("")
-  interval  Int      @default(5)
-  updatedAt DateTime @updatedAt
+  interval     Int      @default(5)
+  subject      String   @default("")
+  htmlTemplate String   @default("<h1>Hello {name}</h1><p>This is a test email.</p>")
+  updatedAt    DateTime @updatedAt
 }
 
 model EmailLog {
