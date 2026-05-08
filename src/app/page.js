@@ -394,7 +394,7 @@ export default function Dashboard() {
               </div>
               <div style={{display: 'flex', gap: '0.5rem'}}>
                 <button className="btn-secondary" onClick={exportLogs} disabled={logs.length === 0}>Export to Excel</button>
-                <button className="btn-secondary" style={{color: '#ff4d4f', borderColor: 'rgba(255, 77, 79, 0.5)'}} onClick={clearLogs} disabled={logs.length === 0}>Clear All</button>
+                <button className="btn-outline-danger" onClick={clearLogs} disabled={logs.length === 0}>Clear All</button>
                 <button className="btn-primary" onClick={fetchLogs}>Refresh</button>
               </div>
             </div>
