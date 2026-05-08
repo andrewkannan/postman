@@ -9,6 +9,9 @@ export async function POST(request) {
 
     const setting = await db.setting.findUnique({ where: { id: 1 } });
     if (!setting || !setting.host) {
+      await db.emailLog.create({
+        data: { email, status: 'Failed', message: 'SMTP settings not configured' }
+      });
       return NextResponse.json({ error: 'SMTP settings not configured' }, { status: 400 });
     }
 
