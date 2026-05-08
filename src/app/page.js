@@ -68,6 +68,33 @@ export default function Dashboard() {
     }
   };
 
+  const exportLogs = () => {
+    if (logs.length === 0) return alert('No logs to export.');
+    
+    const ws = XLSX.utils.json_to_sheet(logs.map(log => ({
+      Email: log.email,
+      Status: log.status,
+      Message: log.message,
+      Date: new Date(log.timestamp).toLocaleString()
+    })));
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Logs");
+    
+    XLSX.writeFile(wb, `PostmanPro_Logs_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const clearLogs = async () => {
+    if (!confirm('Are you sure you want to delete all logs? This cannot be undone.')) return;
+    
+    const res = await fetch('/api/logs', { method: 'DELETE' });
+    if (res.ok) {
+      setLogs([]);
+    } else {
+      alert('Failed to clear logs.');
+    }
+  };
+
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
@@ -338,7 +365,11 @@ export default function Dashboard() {
           <div className={styles.tabContent}>
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
               <h2>Email Logs</h2>
-              <button className="btn-primary" onClick={fetchLogs}>Refresh</button>
+              <div style={{display: 'flex', gap: '0.5rem'}}>
+                <button className="btn-secondary" onClick={exportLogs} disabled={logs.length === 0}>Export to Excel</button>
+                <button className="btn-secondary" style={{color: '#ff4d4f', borderColor: 'rgba(255, 77, 79, 0.5)'}} onClick={clearLogs} disabled={logs.length === 0}>Clear All</button>
+                <button className="btn-primary" onClick={fetchLogs}>Refresh</button>
+              </div>
             </div>
             
             <div style={{maxHeight: '500px', overflowY: 'auto', marginTop: '1rem'}}>

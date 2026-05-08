@@ -16,3 +16,13 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE() {
+  try {
+    await db.emailLog.deleteMany({});
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to clear logs:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
