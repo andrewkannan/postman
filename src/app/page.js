@@ -36,14 +36,22 @@ export default function Dashboard() {
   }, [activeTab]);
 
   const fetchSettings = async () => {
-    const res = await fetch('/api/settings');
-    if (res.ok) {
-      const data = await res.json();
-      if (data) {
-        setSettings({ host: data.host, port: data.port, user: data.user, pass: data.pass, interval: data.interval });
-        if (data.subject) setSubject(data.subject);
-        if (data.htmlTemplate) setHtmlTemplate(data.htmlTemplate);
+    try {
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
+        if (data) {
+          setSettings({ host: data.host, port: data.port, user: data.user, pass: data.pass, interval: data.interval });
+          if (data.subject) setSubject(data.subject);
+          if (data.htmlTemplate) setHtmlTemplate(data.htmlTemplate);
+        }
+      } else {
+        const err = await res.json();
+        console.error('Failed to load settings:', err);
+        alert('Failed to load settings: ' + err.error);
       }
+    } catch (e) {
+      console.error('Fetch settings error:', e);
     }
   };
 
@@ -61,15 +69,25 @@ export default function Dashboard() {
   };
 
   const handleSaveSettings = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setSavingSettings(true);
-    await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...settings, subject, htmlTemplate }),
-    });
-    setSavingSettings(false);
-    alert('Settings saved!');
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...settings, subject, htmlTemplate }),
+      });
+      setSavingSettings(false);
+      if (!res.ok) {
+        const err = await res.json();
+        alert('Failed to save settings: ' + err.error);
+      } else {
+        alert('Settings saved!');
+      }
+    } catch (e) {
+      setSavingSettings(false);
+      alert('Network error while saving settings: ' + e.message);
+    }
   };
 
   const handleFileUpload = (e) => {

@@ -15,7 +15,7 @@ export async function GET() {
     return NextResponse.json(setting);
   } catch (error) {
     console.error('Failed to get settings:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
@@ -33,6 +33,6 @@ export async function POST(request) {
     return NextResponse.json(setting);
   } catch (error) {
     console.error('Failed to update settings:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
