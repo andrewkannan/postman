@@ -22,6 +22,11 @@ export default function Dashboard() {
   const [blasting, setBlasting] = useState(false);
   const [progress, setProgress] = useState(0);
   
+  // Manual Entry State
+  const [manualName, setManualName] = useState('');
+  const [manualEmail, setManualEmail] = useState('');
+  const [showManualEntry, setShowManualEntry] = useState(false);
+  
   // Logs State
   const [logs, setLogs] = useState([]);
 
@@ -131,8 +136,17 @@ export default function Dashboard() {
     reader.readAsBinaryString(file);
   };
 
+  const handleAddManualUser = (e) => {
+    e.preventDefault();
+    if (!manualEmail) return alert("Email is required");
+    setUsers([...users, { name: manualName || 'User', email: manualEmail, status: 'Pending' }]);
+    setManualName('');
+    setManualEmail('');
+    setShowManualEntry(false);
+  };
+
   const startBlast = async () => {
-    if (users.length === 0) return alert('Upload an excel file first.');
+    if (users.length === 0) return alert('Please add at least one user to the list.');
     if (!subject) return alert('Enter a subject.');
     
     setBlasting(true);
@@ -263,9 +277,22 @@ export default function Dashboard() {
         {activeTab === 'blast' && (
           <div className={styles.tabContent}>
             <h2>Blast Emails</h2>
-            <p style={{color: 'var(--text-muted)', marginBottom: '1rem'}}>Upload an Excel file (.xlsx) with "Name" and "Email" columns.</p>
+            <p style={{color: 'var(--text-muted)', marginBottom: '1rem'}}>Upload an Excel file (.xlsx) or manually add a user.</p>
             
-            <input type="file" accept=".xlsx, .xls" className={`form-control ${styles.fileInput}`} onChange={handleFileUpload} disabled={blasting} />
+            <div style={{display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center'}}>
+              <input type="file" accept=".xlsx, .xls" className={`form-control ${styles.fileInput}`} onChange={handleFileUpload} disabled={blasting} style={{flex: 1, margin: 0}} />
+              <button className="btn-secondary" onClick={() => setShowManualEntry(!showManualEntry)} disabled={blasting} style={{padding: '0.8rem 1.5rem', whiteSpace: 'nowrap'}}>
+                {showManualEntry ? 'Cancel Manual Entry' : '+ Add Single User'}
+              </button>
+            </div>
+
+            {showManualEntry && (
+              <form onSubmit={handleAddManualUser} style={{display: 'flex', gap: '1rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', alignItems: 'center'}}>
+                <input type="text" className="form-control" placeholder="Name (optional)" value={manualName} onChange={e => setManualName(e.target.value)} disabled={blasting} style={{margin: 0, flex: 1}} />
+                <input type="email" className="form-control" placeholder="Email (required)" value={manualEmail} onChange={e => setManualEmail(e.target.value)} disabled={blasting} required style={{margin: 0, flex: 2}} />
+                <button type="submit" className="btn-primary" disabled={blasting} style={{margin: 0}}>Add to List</button>
+              </form>
+            )}
             
             {users.length > 0 && (
               <>
