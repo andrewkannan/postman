@@ -5,6 +5,7 @@ const globalForPrisma = globalThis;
 export const db =
   globalForPrisma.prisma ||
   new PrismaClient({
+    ...(process.env.DATABASE_URL ? {} : { datasourceUrl: 'postgresql://dummy:dummy@localhost/dummy' }),
     log: ['query'],
   });
 
