@@ -27,6 +27,10 @@ export default function Dashboard() {
   const [manualEmail, setManualEmail] = useState('');
   const [showManualEntry, setShowManualEntry] = useState(false);
   
+  // Search State
+  const [userSearch, setUserSearch] = useState('');
+  const [logSearch, setLogSearch] = useState('');
+  
   // Logs State
   const [logs, setLogs] = useState([]);
 
@@ -225,6 +229,18 @@ export default function Dashboard() {
     alert('Blast completed!');
   };
 
+  const filteredUsers = users.filter(u => 
+    u.name.toLowerCase().includes(userSearch.toLowerCase()) || 
+    u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.status.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
+  const filteredLogs = logs.filter(log => 
+    log.email.toLowerCase().includes(logSearch.toLowerCase()) || 
+    log.status.toLowerCase().includes(logSearch.toLowerCase()) ||
+    (log.message && log.message.toLowerCase().includes(logSearch.toLowerCase()))
+  );
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -323,8 +339,11 @@ export default function Dashboard() {
             
             {users.length > 0 && (
               <>
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1rem 0'}}>
-                  <span>{users.length} users loaded.</span>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1rem 0', flexWrap: 'wrap', gap: '1rem'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                    <span>{users.length} users loaded.</span>
+                    <input type="text" className="form-control" placeholder="Search users..." value={userSearch} onChange={e => setUserSearch(e.target.value)} style={{margin: 0, width: '250px', padding: '0.4rem 0.8rem'}} />
+                  </div>
                   <button className="btn-primary" onClick={startBlast} disabled={blasting || !subject}>
                     {blasting ? 'Blasting...' : 'Start Blast'}
                   </button>
@@ -346,13 +365,18 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {users.map((u, i) => (
+                      {filteredUsers.map((u, i) => (
                         <tr key={i}>
                           <td>{u.name}</td>
                           <td>{u.email}</td>
                           <td className={u.status === 'Sent' ? styles.statusSent : u.status === 'Failed' ? styles.statusFailed : ''}>{u.status}</td>
                         </tr>
                       ))}
+                      {filteredUsers.length === 0 && (
+                        <tr>
+                          <td colSpan="3" style={{textAlign: 'center', padding: '2rem'}}>No users found matching "{userSearch}".</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -363,8 +387,11 @@ export default function Dashboard() {
 
         {activeTab === 'logs' && (
           <div className={styles.tabContent}>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-              <h2>Email Logs</h2>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                <h2 style={{margin: 0}}>Email Logs</h2>
+                <input type="text" className="form-control" placeholder="Search logs..." value={logSearch} onChange={e => setLogSearch(e.target.value)} style={{margin: 0, width: '250px', padding: '0.4rem 0.8rem'}} />
+              </div>
               <div style={{display: 'flex', gap: '0.5rem'}}>
                 <button className="btn-secondary" onClick={exportLogs} disabled={logs.length === 0}>Export to Excel</button>
                 <button className="btn-secondary" style={{color: '#ff4d4f', borderColor: 'rgba(255, 77, 79, 0.5)'}} onClick={clearLogs} disabled={logs.length === 0}>Clear All</button>
@@ -383,7 +410,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => (
+                  {filteredLogs.map((log) => (
                     <tr key={log.id}>
                       <td>{log.email}</td>
                       <td className={log.status === 'Sent' ? styles.statusSent : styles.statusFailed}>{log.status}</td>
@@ -391,6 +418,11 @@ export default function Dashboard() {
                       <td>{new Date(log.timestamp).toLocaleString()}</td>
                     </tr>
                   ))}
+                  {filteredLogs.length === 0 && logs.length > 0 && (
+                    <tr>
+                      <td colSpan="4" style={{textAlign: 'center', padding: '2rem'}}>No logs found matching "{logSearch}".</td>
+                    </tr>
+                  )}
                   {logs.length === 0 && (
                     <tr>
                       <td colSpan="4" style={{textAlign: 'center', padding: '2rem'}}>No logs found.</td>
