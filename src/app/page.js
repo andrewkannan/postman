@@ -16,6 +16,7 @@ export default function Dashboard() {
   // Template State
   const [subject, setSubject] = useState('');
   const [htmlTemplate, setHtmlTemplate] = useState('<h1>Hello {name}</h1><p>This is a test email.</p>');
+  const [attachmentFile, setAttachmentFile] = useState(null);
   
   // Blast State
   const [users, setUsers] = useState([]);
@@ -26,6 +27,30 @@ export default function Dashboard() {
   const [manualName, setManualName] = useState('');
   const [manualEmail, setManualEmail] = useState('');
   const [showManualEntry, setShowManualEntry] = useState(false);
+  
+  // Edit User State
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+
+  const startEdit = (user) => {
+    setEditingUserId(user.id);
+    setEditName(user.name);
+    setEditEmail(user.email);
+  };
+
+  const saveEdit = () => {
+    setUsers(users.map(u => u.id === editingUserId ? { ...u, name: editName, email: editEmail } : u));
+    setEditingUserId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingUserId(null);
+  };
+
+  const deleteUser = (id) => {
+    setUsers(users.filter(u => u.id !== id));
+  };
   
   // Search State
   const [userSearch, setUserSearch] = useState('');
@@ -154,11 +179,12 @@ export default function Dashboard() {
         for (let i = 1; i < data.length; i++) {
           const row = data[i];
           if (row[emailIdx]) {
-            parsedUsers.push({
-              name: row[nameIdx] || 'User',
-              email: row[emailIdx],
-              status: 'Pending'
-            });
+              parsedUsers.push({
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                name: row[nameIdx] || 'User',
+                email: row[emailIdx],
+                status: 'Pending'
+              });
           }
         }
       }
@@ -170,7 +196,7 @@ export default function Dashboard() {
   const handleAddManualUser = (e) => {
     e.preventDefault();
     if (!manualEmail) return alert("Email is required");
-    setUsers([...users, { name: manualName || 'User', email: manualEmail, status: 'Pending' }]);
+    setUsers([...users, { id: Date.now().toString() + Math.random().toString(36).substr(2, 9), name: manualName || 'User', email: manualEmail, status: 'Pending' }]);
     setManualName('');
     setManualEmail('');
     setShowManualEntry(false);
@@ -198,14 +224,17 @@ export default function Dashboard() {
       setUsers([...localUsers]);
 
       try {
+        const formData = new FormData();
+        formData.append('email', user.email);
+        formData.append('subject', subject.replace(/{name}/gi, user.name));
+        formData.append('html', personalizedHtml);
+        if (attachmentFile) {
+          formData.append('attachment', attachmentFile);
+        }
+
         const res = await fetch('/api/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: user.email,
-            subject: subject.replace(/{name}/gi, user.name),
-            html: personalizedHtml
-          }),
+          body: formData,
         });
 
         if (res.ok) {
@@ -303,6 +332,11 @@ export default function Dashboard() {
                   <label>HTML Content</label>
                   <textarea className="form-control" rows="15" value={htmlTemplate} onChange={e => setHtmlTemplate(e.target.value)}></textarea>
                 </div>
+                <div className="form-group">
+                  <label>Attachment (Optional)</label>
+                  <input type="file" className="form-control" onChange={e => setAttachmentFile(e.target.files[0])} style={{padding: '0.4rem'}} />
+                  {attachmentFile && <small style={{color: 'var(--text-muted)', display: 'block', marginTop: '0.5rem'}}>Selected: {attachmentFile.name}</small>}
+                </div>
               </div>
               <div>
                 <h2>Live Preview</h2>
@@ -362,14 +396,37 @@ export default function Dashboard() {
                         <th>Name</th>
                         <th>Email</th>
                         <th>Status</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredUsers.map((u, i) => (
-                        <tr key={i}>
-                          <td>{u.name}</td>
-                          <td>{u.email}</td>
-                          <td className={u.status === 'Sent' ? styles.statusSent : u.status === 'Failed' ? styles.statusFailed : ''}>{u.status}</td>
+                        <tr key={u.id || i}>
+                          {editingUserId === u.id && u.id ? (
+                            <>
+                              <td><input type="text" className="form-control" value={editName} onChange={e => setEditName(e.target.value)} style={{margin: 0, padding: '0.4rem'}} /></td>
+                              <td><input type="email" className="form-control" value={editEmail} onChange={e => setEditEmail(e.target.value)} style={{margin: 0, padding: '0.4rem'}} /></td>
+                              <td>{u.status}</td>
+                              <td>
+                                <button className="btn-primary" onClick={saveEdit} style={{padding: '0.3rem 0.6rem', fontSize: '0.8rem', marginRight: '0.5rem', marginBottom: '0.2rem'}}>Save</button>
+                                <button className="btn-secondary" onClick={cancelEdit} style={{padding: '0.3rem 0.6rem', fontSize: '0.8rem'}}>Cancel</button>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td>{u.name}</td>
+                              <td>{u.email}</td>
+                              <td className={u.status === 'Sent' ? styles.statusSent : u.status === 'Failed' ? styles.statusFailed : ''}>{u.status}</td>
+                              <td>
+                                {u.id && (
+                                  <>
+                                    <button className="btn-secondary" onClick={() => startEdit(u)} disabled={blasting} style={{padding: '0.3rem 0.6rem', fontSize: '0.8rem', marginRight: '0.5rem', marginBottom: '0.2rem'}}>Edit</button>
+                                    <button className="btn-outline-danger" onClick={() => deleteUser(u.id)} disabled={blasting} style={{padding: '0.3rem 0.6rem', fontSize: '0.8rem', border: '1px solid #ff4d4f', color: '#ff4d4f', background: 'transparent', borderRadius: '4px'}}>Delete</button>
+                                  </>
+                                )}
+                              </td>
+                            </>
+                          )}
                         </tr>
                       ))}
                       {filteredUsers.length === 0 && (

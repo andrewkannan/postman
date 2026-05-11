@@ -5,7 +5,11 @@ import { db } from '@/lib/db';
 
 export async function POST(request) {
   try {
-    const { email, subject, html } = await request.json();
+    const formData = await request.formData();
+    const email = formData.get('email');
+    const subject = formData.get('subject');
+    const html = formData.get('html');
+    const attachment = formData.get('attachment');
 
     const setting = await db.setting.findUnique({ where: { id: 1 } });
     if (!setting || !setting.host) {
@@ -26,12 +30,25 @@ export async function POST(request) {
     });
 
     try {
-      await transporter.sendMail({
+      const mailOptions = {
         from: setting.user,
         to: email,
         subject: subject,
         html: html,
-      });
+      };
+
+      if (attachment && attachment.name) {
+        const bytes = await attachment.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        mailOptions.attachments = [
+          {
+            filename: attachment.name,
+            content: buffer,
+          },
+        ];
+      }
+
+      await transporter.sendMail(mailOptions);
 
       await db.emailLog.create({
         data: {
