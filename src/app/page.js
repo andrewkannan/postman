@@ -358,7 +358,8 @@ export default function Dashboard() {
             
             <div style={{display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center'}}>
               <input type="file" accept=".xlsx, .xls" className={`form-control ${styles.fileInput}`} onChange={handleFileUpload} disabled={blasting} style={{flex: 1, margin: 0}} />
-              <button className="btn-secondary" onClick={() => setShowManualEntry(!showManualEntry)} disabled={blasting} style={{padding: '0.8rem 1.5rem', whiteSpace: 'nowrap'}}>
+              <span style={{color: 'var(--text-muted)', fontWeight: 'bold'}}>OR</span>
+              <button className="btn-primary" onClick={() => setShowManualEntry(!showManualEntry)} disabled={blasting} style={{padding: '0.8rem 1.5rem', whiteSpace: 'nowrap', backgroundColor: 'var(--primary)'}}>
                 {showManualEntry ? 'Cancel Manual Entry' : '+ Add Single User'}
               </button>
             </div>
